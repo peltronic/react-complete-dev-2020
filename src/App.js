@@ -20,9 +20,20 @@ class App extends Component {
   unsubscribeFromAuth = null
 
   componentDidMount() {
-    this.unsubscribeFromAuth = auth.onAuthStateChanged(userAuth => {
-      //this.setState({ currentUser: user })
-      createUserProfileDocument(user)
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if (userAuth) {
+        const userRef = await createUserProfileDocument(userAuth)
+        userRef.onSnapshot(snapShot => {
+          this.setState({
+            currentUser: {
+              id: snapShot.id,
+              ...snapShot.data()
+            }
+          }, () => console.log('onSnapshot state', this.state))
+        })
+      } else {
+        this.setState({ currentUser: userAuth }) // why not just set to null?
+      }
 
     })
   }
@@ -34,11 +45,12 @@ class App extends Component {
   render() {
     return (
       <div>
-          <Header currentUser={this.state.currentUser} />
+        <Header currentUser={this.state.currentUser} />
         <Switch>
           <Route exact path='/' component={HomePage} />
           <Route path='/shop' component={ShopPage} />
           <Route path='/login' component={AuthPage} />
+          <Route path='/signin' component={AuthPage} />
         </Switch>
       </div>
     )
